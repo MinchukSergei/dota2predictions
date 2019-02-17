@@ -1,44 +1,84 @@
+import backoff
 import requests
-from d2preparer.db_connector import conn, public_match
-from sqlalchemy import select
 import time
+from sqlalchemy import select
+
+from d2preparer.db_connector import conn, public_match
+from d2preparer.error_log import db_log
+
+MODULE_NAME = __file__
 
 
 def main():
-    for i in range(1000):
-        last_match = get_last_match_id()
+    match_sheets = 100  # 100 per one sheet
+
+    for i in range(match_sheets):
+        print(f'Number of sheet: {i}')
+        last_match = get_last_match_pk()
+
         public_match_url = 'https://api.opendota.com/api/publicMatches'
-        success = False
-        attempts = 10
-        min_sleep = 1
-        max_sleep = 3
 
-        while not success and attempts > 0:
-            try:
-                if last_match is None:
-                    r = requests.get(public_match_url)
-                else:
-                    r = requests.get(f"{public_match_url}?less_than_match_id={last_match['match_id']}")
-            except requests.exceptions.RequestException as e:
-                print(e)
-                attempts = attempts - 1
-                time.sleep(max_sleep)
-                continue
+        if last_match is not None:
+            last_match_pk = last_match['match_pk']
+            public_match_url = f"{public_match_url}?less_than_match_id={last_match_pk}"
 
-            json_result = r.json()
+        res = get_pub_match(public_match_url)
 
-            if r.status_code == 200 and len(json_result) > 0:
-                success = True
-                time.sleep(min_sleep)
-            else:
-                print(f'Status code: {r.status_code}. Response: {r.text}')
-                attempts = attempts - 1
-                time.sleep(max_sleep)
-    pass
+        matches_json = res.json()
+        save_match_in_db(matches_json)
+
+        time.sleep(1)
 
 
-def get_last_match_id():
-    sel = select([public_match.c.match_id]).order_by(public_match.c.match_id)
+def save_match_in_db(matches_json):
+    matches = []
+
+    for match in matches_json:
+        matches.append({
+            'match_pk': match['match_id'],
+            'match_seq_num': match['match_seq_num'],
+            'radiant_win': match['radiant_win'],
+            'duration': match['duration'],
+            'avg_mmr': match['avg_mmr'],
+            'game_mode': match['game_mode'],
+            'radiant_team': match['radiant_team'],
+            'dire_team': match['dire_team']
+        })
+
+    return conn.execute(public_match.insert(), matches)
+
+
+def pub_match_predicate(res):
+    return res.status_code != 200 or len(res.json()) == 0
+
+
+def pub_match_backoff_handler(details):
+    res = details['value']
+
+    e_msg = {
+        'reason': 'Request failed',
+        'response_text': res.text,
+        'status_code': res.status_code,
+        'url': res.url,
+        'matches_len': len(res.json())
+    }
+    db_log(MODULE_NAME, e_msg)
+
+
+@backoff.on_exception(backoff.expo,
+                      requests.exceptions.RequestException,
+                      max_tries=7)
+@backoff.on_predicate(backoff.expo,
+                      pub_match_predicate,
+                      max_tries=7,
+                      on_backoff=pub_match_backoff_handler
+                      )
+def get_pub_match(url):
+    return requests.get(url)
+
+
+def get_last_match_pk():
+    sel = select([public_match.c.match_pk]).order_by(public_match.c.match_pk)
     res = conn.execute(sel)
     return res.fetchone()
 
