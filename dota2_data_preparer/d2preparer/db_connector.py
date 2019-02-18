@@ -25,7 +25,7 @@ error_log = Table(
     'error_log',
     metadata,
     Column('error_log_pk', BigInteger, primary_key=True),
-    Column('error_message', VARCHAR(30), nullable=False),
-    Column('module_name', JSONB, nullable=False),
+    Column('error_message', JSONB, nullable=False),
+    Column('module_name', VARCHAR(255), nullable=False),
     Column('date_creation', TIMESTAMP)
 )

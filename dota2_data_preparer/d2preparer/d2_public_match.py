@@ -10,7 +10,7 @@ MODULE_NAME = __file__
 
 
 def main():
-    match_sheets = 1000  # 100 per one sheet
+    match_sheets = 100  # 100 per one sheet
 
     for i in range(match_sheets):
         print(f'Number of sheet: {i}')
@@ -68,10 +68,10 @@ def pub_match_backoff_handler(details):
 
 @backoff.on_exception(backoff.expo,
                       requests.exceptions.RequestException,
-                      max_tries=7)
+                      max_tries=8)
 @backoff.on_predicate(backoff.expo,
                       pub_match_predicate,
-                      max_tries=7,
+                      max_tries=8,
                       on_backoff=pub_match_backoff_handler
                       )
 def get_pub_match(url):

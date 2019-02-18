@@ -1,6 +1,6 @@
 import os
 
-valve_api_key = os.environ['VALVE_API_KEY']
+# valve_api_key = os.environ['VALVE_API_KEY']
 
 db_name = os.environ['DB_NAME']
 db_host = os.environ['DB_HOST']
