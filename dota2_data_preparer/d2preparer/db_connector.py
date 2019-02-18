@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Table, MetaData, Column, BigInteger, Boolean, Integer, VARCHAR
+from sqlalchemy import create_engine, Table, MetaData, Column, BigInteger, Boolean, Integer, VARCHAR, TIMESTAMP
 from sqlalchemy.dialects.postgresql import JSONB
 from d2preparer.envvar import db_host, db_name, db_pass, db_port, db_user
 
@@ -25,6 +25,7 @@ error_log = Table(
     'error_log',
     metadata,
     Column('error_log_pk', BigInteger, primary_key=True),
-    Column('module_name', VARCHAR(30), nullable=False),
-    Column('module_name', JSONB, nullable=False)
+    Column('error_message', VARCHAR(30), nullable=False),
+    Column('module_name', JSONB, nullable=False),
+    Column('date_creation', TIMESTAMP)
 )

@@ -10,7 +10,7 @@ MODULE_NAME = __file__
 
 
 def main():
-    match_sheets = 100  # 100 per one sheet
+    match_sheets = 1000  # 100 per one sheet
 
     for i in range(match_sheets):
         print(f'Number of sheet: {i}')
@@ -62,6 +62,7 @@ def pub_match_backoff_handler(details):
         'url': res.url,
         'matches_len': len(res.json())
     }
+
     db_log(MODULE_NAME, e_msg)
 
 
