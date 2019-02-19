@@ -10,7 +10,7 @@ MODULE_NAME = __file__
 
 
 def main():
-    match_sheets = 100  # 100 per one sheet
+    match_sheets = 1000  # 100 per one sheet
 
     for i in range(match_sheets):
         print(f'Number of sheet: {i}')
@@ -49,18 +49,28 @@ def save_match_in_db(matches_json):
 
 
 def pub_match_predicate(res):
-    return res.status_code != 200 or len(res.json()) == 0
+    try:
+        matches_len = len(res.json())
+    except ValueError:
+        matches_len = 0
+
+    return res.status_code != 200 or matches_len == 0
 
 
 def pub_match_backoff_handler(details):
     res = details['value']
+
+    try:
+        matches_len = len(res.json())
+    except ValueError:
+        matches_len = f'can not parse response.text: {res.text}'
 
     e_msg = {
         'reason': 'Request failed',
         'response_text': res.text,
         'status_code': res.status_code,
         'url': res.url,
-        'matches_len': len(res.json())
+        'matches_len': matches_len
     }
 
     db_log(MODULE_NAME, e_msg)
