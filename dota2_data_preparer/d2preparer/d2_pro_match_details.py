@@ -15,7 +15,7 @@ def main():
     for i in range(match_sheets):
         print(f'Number of sheet: {i}')
 
-        last_match_pk = get_last_match_pk_where_seq_num_is_none()
+        last_match_pk = get_last_match_pk_where_seq_num_is_null()
 
         if last_match_pk is None:
             return
@@ -63,7 +63,7 @@ def main():
                                            pbbd.dire_team_bans
                                     from (select *
                                           from matches
-                                          where match_id >= {last_match_pk}
+                                          where match_id >= {last_match_pk['match_pk']}
                                           order by match_id
                                           limit {limit}) mat
                                            LEFT JOIN pbpr on mat.match_id = pbpr.match_id
@@ -158,7 +158,7 @@ def get_pro_match_details(url, params=None):
     return requests.get(url, params)
 
 
-def get_last_match_pk_where_seq_num_is_none():
+def get_last_match_pk_where_seq_num_is_null():
     sel = select([pro_match.c.match_pk]) \
         .where(pro_match.c.match_seq_num == None) \
         .order_by(pro_match.c.match_pk)

@@ -14,12 +14,12 @@ def main():
 
     for i in range(match_sheets):
         print(f'Number of sheet: {i}')
-        last_match = get_last_match_pk()
+        last_match_pk = get_last_match_pk()
 
         public_match_url = 'https://api.opendota.com/api/publicMatches'
 
-        if last_match is not None:
-            res = get_pub_match(public_match_url, params={'less_than_match_id': last_match['match_pk']})
+        if last_match_pk is not None:
+            res = get_pub_match(public_match_url, params={'less_than_match_id': last_match_pk['match_pk']})
         else:
             res = get_pub_match(public_match_url)
 
