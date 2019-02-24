@@ -1,6 +1,7 @@
+import time
+
 import backoff
 import requests
-import time
 from sqlalchemy import select
 
 from d2preparer.db_connector import conn, pro_match
@@ -42,6 +43,7 @@ def save_match_in_db(matches_json):
             'dire_team_id': match['dire_team_id'],
             'dire_name': match['dire_name'],
             'radiant_score': match['radiant_score'],
+            'dire_score': match['dire_score'],
             'start_time': match['start_time']
         })
 

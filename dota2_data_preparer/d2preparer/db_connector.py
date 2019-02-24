@@ -37,6 +37,8 @@ pro_match = Table(
     Column('dire_score', Integer),
     Column('radiant_team', VARCHAR(25)),
     Column('dire_team', VARCHAR(25)),
+    Column('radiant_team_bans', VARCHAR(25)),
+    Column('dire_team_bans', VARCHAR(25)),
     Column('first_blood_time', Integer),
     Column('human_players', Integer),
     Column('start_time', Integer),
