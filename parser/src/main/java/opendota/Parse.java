@@ -3,36 +3,33 @@ package opendota;
 import com.google.gson.Gson;
 import opendota.entity.DeathInfo;
 import opendota.entity.Entry;
-import opendota.entity.Item;
 import opendota.entity.TeamWorthInfo;
-import opendota.exception.UnknownItemFoundException;
 import skadistats.clarity.decoder.Util;
 import skadistats.clarity.model.CombatLogEntry;
 import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
-import skadistats.clarity.model.StringTable;
 import skadistats.clarity.processor.entities.Entities;
 import skadistats.clarity.processor.entities.UsesEntities;
 import skadistats.clarity.processor.gameevents.OnCombatLogEntry;
 import skadistats.clarity.processor.reader.OnTickStart;
 import skadistats.clarity.processor.runner.Context;
 import skadistats.clarity.processor.runner.SimpleRunner;
-import skadistats.clarity.processor.stringtables.StringTables;
 import skadistats.clarity.processor.stringtables.UsesStringTable;
 import skadistats.clarity.source.InputStreamSource;
 import skadistats.clarity.wire.common.proto.DotaUserMessages;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
-import java.util.List;
 
 public class Parse {
     private OutputStream os;
 
-    private float INTERVAL = 1;
+    private final float INTERVAL = 1;
     private float nextInterval = 0;
     private Integer time = 0;
+
     private int numPlayers = 10;
     private int[] validIndices = new int[numPlayers];
     private boolean init = false;
@@ -42,7 +39,6 @@ public class Parse {
     private DeathInfo deathInfo;
     private HashMap<String, Integer> slotByName;
 
-    private ArrayList<Entry> logBuffer = new ArrayList<>();
 
     public Parse(InputStream is, OutputStream os) throws IOException {
         this.os = os;
@@ -62,9 +58,7 @@ public class Parse {
 
     private void output(Entry e) throws Exception {
         try {
-            if (gameStartTime == 0) {
-                logBuffer.add(e);
-            } else {
+            if (gameStartTime != 0) {
                 e.time -= gameStartTime;
                 this.os.write((g.toJson(e) + "\n").getBytes());
             }
@@ -72,13 +66,6 @@ public class Parse {
             ex.printStackTrace();
             throw new Exception(String.format("Exception during writing to file: %s", ex.getMessage()));
         }
-    }
-
-    private void flushLogBuffer() throws Exception {
-        for (Entry e : logBuffer) {
-            output(e);
-        }
-        logBuffer = null;
     }
 
     @OnCombatLogEntry
@@ -108,19 +95,16 @@ public class Parse {
                 // int currGameStartTime = Math.round( (float) grp.getProperty("m_pGameRules.m_flGameStartTime"));
                 if (gameStartTime == 0) {
                     gameStartTime = combatLogEntry.time;
-//                    flushLogBuffer();
                 }
             }
 
             if (cle.getType().equals(DotaUserMessages.DOTA_COMBATLOG_TYPES.DOTA_COMBATLOG_DEATH) && cle.getType().ordinal() <= 19) {
                 if (cle.getTargetName().contains("tower")) {
                     this.updateTowerDeathInfo(combatLogEntry);
-//                    output(combatLogEntry);
                 }
 
                 if (cle.getTargetName().contains("roshan")) {
                     this.updateRoshanDeathInfo(combatLogEntry);
-//                    output(combatLogEntry);
                 }
             }
         } catch (Exception e) {
@@ -284,10 +268,6 @@ public class Parse {
                     Entity dataTeam = playerTeam == 2 ? rData : dData;
 
                     if (playerTeam == 2 || playerTeam == 3 && teamSlot >= 0) {
-
-//                        entry.type = "interval";
-//                        entry.slot = i;
-
                         Integer level = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iLevel", validIndices[i]);
                         Integer kills = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iKills", validIndices[i]);
                         Integer deaths = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iDeaths", validIndices[i]);
@@ -321,41 +301,11 @@ public class Parse {
                         Entity e = ctx.getProcessor(Entities.class).getByHandle(handle);
                         if (this.slotByName.size() != numPlayers) {
                             if (e != null) {
-                                //get the hero's entity name, ex: CDOTA_Hero_Zuus
-//                            entry.unit = e.getDtClass().getDtName();
-//                            entry.hero_id = hero;
-
                                 String unit = e.getDtClass().getDtName();
                                 String ending = unit.substring("CDOTA_Unit_Hero_".length());
                                 String combatLogName = "npc_dota_hero_" + ending.toLowerCase();
                                 combatLogName = combatLogName.replaceAll("_", "");
                                 this.slotByName.putIfAbsent(combatLogName, i);
-                                //check if hero has been assigned to entity
-//                        if (hero > 0) {
-                                //get the hero's entity name, ex: CDOTA_Hero_Zuus
-//                            String unit = e.getDtClass().getDtName();
-                                //grab the end of the name, lowercase it
-//                            String ending = unit.substring("CDOTA_Unit_Hero_".length());
-                                //valve is bad at consistency and the combat log name could involve replacing camelCase with _ or not!
-                                //double map it so we can look up both cases
-//                            String combatLogName = "npc_dota_hero_" + ending.toLowerCase();
-                                //don't include final underscore here since the first letter is always capitalized and will be converted to underscore
-
-//                            entry.hero_inventory = getHeroInventory(ctx, e);
-//                            if (entry.hero_inventory != null) {
-//                                for (Item item : entry.hero_inventory) {
-//                                    Entry startingItemsEntry = new Entry(time);
-//                                    startingItemsEntry.type = "DOTA_ITEM";
-//                                    startingItemsEntry.slot = entry.slot;
-//                                    startingItemsEntry.value = (entry.slot < 5 ? 0 : 123) + entry.slot;
-//                                    startingItemsEntry.item_id = item.id;
-//                                    startingItemsEntry.valuename = item.name;
-//
-//                                    startingItemsEntry.targetname = combatLogName;
-//                                    output(startingItemsEntry);
-//                                }
-//                            }
-//                        }
                             }
                         }
                     } else {
@@ -364,7 +314,6 @@ public class Parse {
                     }
                 }
 
-//                time /= 60;
                 time = 1;
 
                 String precision = "%.0f";
@@ -416,57 +365,6 @@ public class Parse {
                 nextInterval += INTERVAL;
             }
         }
-    }
-
-    private List<Item> getHeroInventory(Context ctx, Entity eHero) {
-        List<Item> inventoryList = new ArrayList<>(6);
-
-        for (int i = 0; i < 6; i++) {
-            try {
-                Item item = getHeroItem(ctx, eHero, i);
-                if (item != null) {
-                    inventoryList.add(item);
-                }
-            } catch (UnknownItemFoundException e) {
-                return null;
-            }
-        }
-
-        return inventoryList;
-    }
-
-    /**
-     * Uses "EntityNames" string table and Entities processor
-     *
-     * @param ctx   Context
-     * @param eHero Hero entity
-     * @param idx   0-5 - inventory, 6-8 - backpack, 9-16 - stash
-     * @return {@code null} - empty slot. Throws @{@link UnknownItemFoundException} if item information can't be extracted
-     */
-    private Item getHeroItem(Context ctx, Entity eHero, int idx) throws UnknownItemFoundException {
-        StringTable stEntityNames = ctx.getProcessor(StringTables.class).forName("EntityNames");
-        Entities entities = ctx.getProcessor(Entities.class);
-
-        Integer hItem = eHero.getProperty("m_hItems." + Util.arrayIdxToString(idx));
-        if (hItem == 0xFFFFFF) {
-            return null;
-        }
-        Entity eItem = entities.getByHandle(hItem);
-        if (eItem == null) {
-            throw new UnknownItemFoundException(String.format("Can't find item by its handle (%d)", hItem));
-        }
-
-        Integer itemId = eItem.getProperty("m_pEntity.m_nameStringableIndex");
-        String itemName = stEntityNames.getNameByIndex(itemId);
-        if (itemName == null) {
-            throw new UnknownItemFoundException("Can't get item name from EntityName string table");
-        }
-
-        Item item = new Item();
-        item.id = itemId;
-        item.name = itemName;
-
-        return item;
     }
 
     private <T> T getEntityProperty(Entity e, String property, Integer idx) {

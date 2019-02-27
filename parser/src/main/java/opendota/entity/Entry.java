@@ -48,10 +48,7 @@ public class Entry {
     public String dRosh;
 
     public Integer time;
-    public Integer hero_id;
     public String type;
-    public Integer slot;
-    public String unit;
 
     public Integer value;
 
@@ -65,14 +62,6 @@ public class Entry {
     public Boolean attackerillusion;
     public Boolean targetillusion;
     public String inflictor;
-
-//    public Integer roshans_killed;
-//    public Integer towers_killed;
-//    public Integer item_id;
-//    public transient List<Item> hero_inventory;
-//	  public Integer obs_placed;
-//	  public Integer sen_placed;
-//	  public Integer rune_pickups;
 
     public Entry() {
     }
