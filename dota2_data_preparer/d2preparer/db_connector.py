@@ -42,7 +42,8 @@ pro_match = Table(
     Column('first_blood_time', Integer),
     Column('human_players', Integer),
     Column('start_time', Integer),
-    Column('replay_url', VARCHAR(255))
+    Column('replay_url', VARCHAR(255)),
+    Column('downloaded_replay', Boolean)
 )
 
 error_log = Table(
