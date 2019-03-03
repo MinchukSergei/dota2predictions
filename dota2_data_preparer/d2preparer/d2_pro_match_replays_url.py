@@ -25,19 +25,19 @@ def main():
         res = get_match_info(pro_match_url)
 
         matches_json = res.json()
-        save_match_in_db(matches_json)
+        save_match_in_db(matches_json, last_match_pk)
 
     # time.sleep(0.3)
 
 
-def save_match_in_db(matches_json):
+def save_match_in_db(matches_json, match_pk):
     replay_url = 'MISSING'
 
     if 'replay_url' in matches_json:
         replay_url = matches_json['replay_url']
 
     update_statement = pro_match.update().where(
-        pro_match.c.match_pk == matches_json['match_id']
+        pro_match.c.match_pk == match_pk
     ).values(
         replay_url=replay_url
     )

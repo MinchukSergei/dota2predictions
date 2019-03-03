@@ -3,7 +3,8 @@ package opendota;
 import com.google.gson.Gson;
 import opendota.entity.DeathInfo;
 import opendota.entity.Entry;
-import opendota.entity.TeamWorthInfo;
+import opendota.entity.ErrorMessage;
+import opendota.entity.ReplayResponse;
 import skadistats.clarity.decoder.Util;
 import skadistats.clarity.model.CombatLogEntry;
 import skadistats.clarity.model.Entity;
@@ -21,6 +22,7 @@ import skadistats.clarity.wire.common.proto.DotaUserMessages;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Parse {
@@ -38,12 +40,21 @@ public class Parse {
     private Gson g = new Gson();
     private DeathInfo deathInfo;
     private HashMap<String, Integer> slotByName;
+    private ReplayResponse replayResponse;
 
+    public ReplayResponse getReplayResponse() {
+        return replayResponse;
+    }
 
-    public Parse(InputStream is, OutputStream os) throws IOException {
+    public void setReplayResponse(ReplayResponse replayResponse) {
+        this.replayResponse = replayResponse;
+    }
+
+    public Parse(InputStream is, OutputStream os, ReplayResponse replayResponse) throws IOException {
         this.os = os;
         this.deathInfo = new DeathInfo();
         this.slotByName = new HashMap<>();
+        this.replayResponse = replayResponse;
 
         this.setTimeCounter(is);
     }
@@ -57,14 +68,9 @@ public class Parse {
     }
 
     private void output(Entry e) throws Exception {
-        try {
-            if (gameStartTime != 0) {
-                e.time -= gameStartTime;
-                this.os.write((g.toJson(e) + "\n").getBytes());
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            throw new Exception(String.format("Exception during writing to file: %s", ex.getMessage()));
+        if (gameStartTime != 0) {
+            e.time -= gameStartTime;
+            replayResponse.getMatchEntries().add(e);
         }
     }
 
@@ -256,7 +262,9 @@ public class Parse {
             if (!postGame && time >= nextInterval) {
                 Entry entry = new Entry();
                 entry.time = time;
-                TeamWorthInfo teamWorthInfo = new TeamWorthInfo();
+
+                time = 1;
+                String precision = "%.0f";
 
                 for (int i = 0; i < numPlayers; i++) {
                     Integer hero = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_nSelectedHeroID", validIndices[i]);
@@ -277,24 +285,96 @@ public class Parse {
                         Integer lh = getEntityProperty(dataTeam, "m_vecDataTeam.%i.m_iLastHitCount", teamSlot);
                         Integer xp = getEntityProperty(dataTeam, "m_vecDataTeam.%i.m_iTotalEarnedXP", teamSlot);
 
-                        if (i <= 4) {
-                            teamWorthInfo.rLevel += level;
-                            teamWorthInfo.rKills += kills;
-                            teamWorthInfo.rDeaths += deaths;
-                            teamWorthInfo.rAssists += assists;
-                            teamWorthInfo.rDenies += denies;
-                            teamWorthInfo.rGold += gold;
-                            teamWorthInfo.rLh += lh;
-                            teamWorthInfo.rXp += xp;
-                        } else {
-                            teamWorthInfo.dLevel += level;
-                            teamWorthInfo.dKills += kills;
-                            teamWorthInfo.dDeaths += deaths;
-                            teamWorthInfo.dAssists += assists;
-                            teamWorthInfo.dDenies += denies;
-                            teamWorthInfo.dGold += gold;
-                            teamWorthInfo.dLh += lh;
-                            teamWorthInfo.dXp += xp;
+                        if (i == 0) {
+                            entry.level0 = String.format(precision, level / (double) time);
+                            entry.kills0 = String.format(precision, kills / (double) time);
+                            entry.deaths0 = String.format(precision, deaths / (double) time);
+                            entry.assists0 = String.format(precision, assists / (double) time);
+                            entry.denies0 = String.format(precision, denies / (double) time);
+                            entry.gold0 = String.format(precision, gold / (double) time);
+                            entry.lastHits0 = String.format(precision, lh / (double) time);
+                            entry.xp0 = String.format(precision, xp / (double) time);
+                        } else if (i == 1) {
+                            entry.level1 = String.format(precision, level / (double) time);
+                            entry.kills1 = String.format(precision, kills / (double) time);
+                            entry.deaths1 = String.format(precision, deaths / (double) time);
+                            entry.assists1 = String.format(precision, assists / (double) time);
+                            entry.denies1 = String.format(precision, denies / (double) time);
+                            entry.gold1 = String.format(precision, gold / (double) time);
+                            entry.lastHits1 = String.format(precision, lh / (double) time);
+                            entry.xp1 = String.format(precision, xp / (double) time);
+                        } else if (i == 2) {
+                            entry.level2 = String.format(precision, level / (double) time);
+                            entry.kills2 = String.format(precision, kills / (double) time);
+                            entry.deaths2 = String.format(precision, deaths / (double) time);
+                            entry.assists2 = String.format(precision, assists / (double) time);
+                            entry.denies2 = String.format(precision, denies / (double) time);
+                            entry.gold2 = String.format(precision, gold / (double) time);
+                            entry.lastHits2 = String.format(precision, lh / (double) time);
+                            entry.xp2 = String.format(precision, xp / (double) time);
+                        } else if (i == 3) {
+                            entry.level3 = String.format(precision, level / (double) time);
+                            entry.kills3 = String.format(precision, kills / (double) time);
+                            entry.deaths3 = String.format(precision, deaths / (double) time);
+                            entry.assists3 = String.format(precision, assists / (double) time);
+                            entry.denies3 = String.format(precision, denies / (double) time);
+                            entry.gold3 = String.format(precision, gold / (double) time);
+                            entry.lastHits3 = String.format(precision, lh / (double) time);
+                            entry.xp3 = String.format(precision, xp / (double) time);
+                        } else if (i == 4) {
+                            entry.level4 = String.format(precision, level / (double) time);
+                            entry.kills4 = String.format(precision, kills / (double) time);
+                            entry.deaths4 = String.format(precision, deaths / (double) time);
+                            entry.assists4 = String.format(precision, assists / (double) time);
+                            entry.denies4 = String.format(precision, denies / (double) time);
+                            entry.gold4 = String.format(precision, gold / (double) time);
+                            entry.lastHits4 = String.format(precision, lh / (double) time);
+                            entry.xp4 = String.format(precision, xp / (double) time);
+                        } else if (i == 5) {
+                            entry.level5 = String.format(precision, level / (double) time);
+                            entry.kills5 = String.format(precision, kills / (double) time);
+                            entry.deaths5 = String.format(precision, deaths / (double) time);
+                            entry.assists5 = String.format(precision, assists / (double) time);
+                            entry.denies5 = String.format(precision, denies / (double) time);
+                            entry.gold5 = String.format(precision, gold / (double) time);
+                            entry.lastHits5 = String.format(precision, lh / (double) time);
+                            entry.xp5 = String.format(precision, xp / (double) time);
+                        } else if (i == 6) {
+                            entry.level6 = String.format(precision, level / (double) time);
+                            entry.kills6 = String.format(precision, kills / (double) time);
+                            entry.deaths6 = String.format(precision, deaths / (double) time);
+                            entry.assists6 = String.format(precision, assists / (double) time);
+                            entry.denies6 = String.format(precision, denies / (double) time);
+                            entry.gold6 = String.format(precision, gold / (double) time);
+                            entry.lastHits6 = String.format(precision, lh / (double) time);
+                            entry.xp6 = String.format(precision, xp / (double) time);
+                        } else if (i == 7) {
+                            entry.level7 = String.format(precision, level / (double) time);
+                            entry.kills7 = String.format(precision, kills / (double) time);
+                            entry.deaths7 = String.format(precision, deaths / (double) time);
+                            entry.assists7 = String.format(precision, assists / (double) time);
+                            entry.denies7 = String.format(precision, denies / (double) time);
+                            entry.gold7 = String.format(precision, gold / (double) time);
+                            entry.lastHits7 = String.format(precision, lh / (double) time);
+                            entry.xp7 = String.format(precision, xp / (double) time);
+                        } else if (i == 8) {
+                            entry.level8 = String.format(precision, level / (double) time);
+                            entry.kills8 = String.format(precision, kills / (double) time);
+                            entry.deaths8 = String.format(precision, deaths / (double) time);
+                            entry.assists8 = String.format(precision, assists / (double) time);
+                            entry.denies8 = String.format(precision, denies / (double) time);
+                            entry.gold8 = String.format(precision, gold / (double) time);
+                            entry.lastHits8 = String.format(precision, lh / (double) time);
+                            entry.xp8 = String.format(precision, xp / (double) time);
+                        } else if (i == 9) {
+                            entry.level9 = String.format(precision, level / (double) time);
+                            entry.kills9 = String.format(precision, kills / (double) time);
+                            entry.deaths9 = String.format(precision, deaths / (double) time);
+                            entry.assists9 = String.format(precision, assists / (double) time);
+                            entry.denies9 = String.format(precision, denies / (double) time);
+                            entry.gold9 = String.format(precision, gold / (double) time);
+                            entry.lastHits9 = String.format(precision, lh / (double) time);
+                            entry.xp9 = String.format(precision, xp / (double) time);
                         }
 
                         //get the player's hero entity
@@ -313,28 +393,6 @@ public class Parse {
                         throw new Exception(errorMessage);
                     }
                 }
-
-                time = 1;
-
-                String precision = "%.0f";
-
-                entry.rLevel = String.format(precision, teamWorthInfo.rLevel / (double) time);
-                entry.rKills = String.format(precision, teamWorthInfo.rKills / (double) time);
-                entry.rDeaths = String.format(precision, teamWorthInfo.rDeaths / (double) time);
-                entry.rAssists = String.format(precision, teamWorthInfo.rAssists / (double) time);
-                entry.rDenies = String.format(precision, teamWorthInfo.rDenies / (double) time);
-                entry.rGold = String.format(precision, teamWorthInfo.rGold / (double) time);
-                entry.rLh = String.format(precision, teamWorthInfo.rLh / (double) time);
-                entry.rXp = String.format(precision, teamWorthInfo.rXp / (double) time);
-
-                entry.dLevel = String.format(precision, teamWorthInfo.dLevel / (double) time);
-                entry.dKills = String.format(precision, teamWorthInfo.dKills / (double) time);
-                entry.dDeaths = String.format(precision, teamWorthInfo.dDeaths / (double) time);
-                entry.dAssists = String.format(precision, teamWorthInfo.dAssists / (double) time);
-                entry.dDenies = String.format(precision, teamWorthInfo.dDenies / (double) time);
-                entry.dGold = String.format(precision, teamWorthInfo.dGold / (double) time);
-                entry.dLh = String.format(precision, teamWorthInfo.dLh / (double) time);
-                entry.dXp = String.format(precision, teamWorthInfo.dXp / (double) time);
 
                 entry.rt1t = String.format(precision, this.deathInfo.radiantTower1Top / (double) time);
                 entry.rt2t = String.format(precision, this.deathInfo.radiantTower2Top / (double) time);

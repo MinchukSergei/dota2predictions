@@ -2,3 +2,4 @@ SQLAlchemy
 psycopg2
 requests
 backoff
+tqdm

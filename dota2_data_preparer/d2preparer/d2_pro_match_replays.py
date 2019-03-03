@@ -83,6 +83,7 @@ def get_match_pk_not_downloaded():
         pro_match.c.replay_url
     ]).where(
         and_(
+            pro_match.c.game_mode == 2,
             pro_match.c.replay_url != None,
             pro_match.c.downloaded_replay == None
         )

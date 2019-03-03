@@ -26,7 +26,7 @@ def main():
         matches_json = res.json()
         save_match_in_db(matches_json)
 
-        time.sleep(0.3)
+        # time.sleep(0.3)
 
 
 def save_match_in_db(matches_json):
@@ -83,6 +83,7 @@ def pub_match_backoff_handler(details):
                       max_tries=8,
                       on_backoff=pub_match_backoff_handler)
 def get_pub_match(url, params=None):
+    print(f'Try: {url}, {params}')
     return requests.get(url, params)
 
 
