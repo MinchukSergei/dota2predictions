@@ -32,8 +32,11 @@ public class Main {
             t.sendResponseHeaders(200, 0);
 
             try {
-                new Parse(is, os, replayResponse);
+                new Parse(is, replayResponse);
             } catch (Exception e) {
+                replayResponse.getMatchEntries().clear();
+                replayResponse.getHeroesOrder().clear();
+
                 replayResponse.setErrorMessage(new ErrorMessage(e.getMessage()));
                 e.printStackTrace();
             }

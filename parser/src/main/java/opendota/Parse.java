@@ -1,9 +1,7 @@
 package opendota;
 
-import com.google.gson.Gson;
 import opendota.entity.DeathInfo;
 import opendota.entity.Entry;
-import opendota.entity.ErrorMessage;
 import opendota.entity.ReplayResponse;
 import skadistats.clarity.decoder.Util;
 import skadistats.clarity.model.CombatLogEntry;
@@ -21,13 +19,9 @@ import skadistats.clarity.wire.common.proto.DotaUserMessages;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Parse {
-    private OutputStream os;
-
     private final float INTERVAL = 1;
     private float nextInterval = 0;
     private Integer time = 0;
@@ -37,24 +31,16 @@ public class Parse {
     private boolean init = false;
     private int gameStartTime = 0;
     private boolean postGame = false; // true when ancient destroyed
-    private Gson g = new Gson();
     private DeathInfo deathInfo;
     private HashMap<String, Integer> slotByName;
+    private HashMap<Integer, Integer> heroesOrder;
     private ReplayResponse replayResponse;
 
-    public ReplayResponse getReplayResponse() {
-        return replayResponse;
-    }
-
-    public void setReplayResponse(ReplayResponse replayResponse) {
-        this.replayResponse = replayResponse;
-    }
-
-    public Parse(InputStream is, OutputStream os, ReplayResponse replayResponse) throws IOException {
-        this.os = os;
+    public Parse(InputStream is, ReplayResponse replayResponse) throws IOException {
         this.deathInfo = new DeathInfo();
         this.slotByName = new HashMap<>();
         this.replayResponse = replayResponse;
+        this.heroesOrder = replayResponse.getHeroesOrder();
 
         this.setTimeCounter(is);
     }
@@ -64,10 +50,10 @@ public class Parse {
         new SimpleRunner(new InputStreamSource(is)).runWith(this);
         long tMatch = System.currentTimeMillis() - tStart;
 
-        System.err.format("total time taken: %s\n", (tMatch) / 1000.0);
+        System.err.format("Total time taken: %s.\n", (tMatch) / 1000.0);
     }
 
-    private void output(Entry e) throws Exception {
+    private void output(Entry e) {
         if (gameStartTime != 0) {
             e.time -= gameStartTime;
             replayResponse.getMatchEntries().add(e);
@@ -106,11 +92,11 @@ public class Parse {
 
             if (cle.getType().equals(DotaUserMessages.DOTA_COMBATLOG_TYPES.DOTA_COMBATLOG_DEATH) && cle.getType().ordinal() <= 19) {
                 if (cle.getTargetName().contains("tower")) {
-                    this.updateTowerDeathInfo(combatLogEntry);
+                    updateTowerDeathInfo(combatLogEntry);
                 }
 
                 if (cle.getTargetName().contains("roshan")) {
-                    this.updateRoshanDeathInfo(combatLogEntry);
+                    updateRoshanDeathInfo(combatLogEntry);
                 }
             }
         } catch (Exception e) {
@@ -125,72 +111,72 @@ public class Parse {
 
         if (targetName.contains("top")) {
             if (targetName.contains("tower1")) {
-                if (!isRadiant) {
-                    this.deathInfo.radiantTower1Top = 1;
+                if (isRadiant) {
+                    deathInfo.radiantTower1Top = false;
                 } else {
-                    this.deathInfo.direTower1Top = 1;
+                    deathInfo.direTower1Top = false;
                 }
             }
             if (targetName.contains("tower2")) {
-                if (!isRadiant) {
-                    this.deathInfo.radiantTower2Top = 1;
+                if (isRadiant) {
+                    deathInfo.radiantTower2Top = false;
                 } else {
-                    this.deathInfo.direTower2Top = 1;
+                    deathInfo.direTower2Top = false;
                 }
             }
             if (targetName.contains("tower3")) {
-                if (!isRadiant) {
-                    this.deathInfo.radiantTower3Top = 1;
+                if (isRadiant) {
+                    deathInfo.radiantTower3Top = false;
                 } else {
-                    this.deathInfo.direTower3Top = 1;
+                    deathInfo.direTower3Top = false;
                 }
             }
         }
 
         if (targetName.contains("mid")) {
             if (targetName.contains("tower1")) {
-                if (!isRadiant) {
-                    this.deathInfo.radiantTower1Mid = 1;
+                if (isRadiant) {
+                    deathInfo.radiantTower1Mid = false;
                 } else {
-                    this.deathInfo.direTower1Mid = 1;
+                    deathInfo.direTower1Mid = false;
                 }
             }
             if (targetName.contains("tower2")) {
-                if (!isRadiant) {
-                    this.deathInfo.radiantTower2Mid = 1;
+                if (isRadiant) {
+                    deathInfo.radiantTower2Mid = false;
                 } else {
-                    this.deathInfo.direTower2Mid = 1;
+                    deathInfo.direTower2Mid = false;
                 }
             }
             if (targetName.contains("tower3")) {
-                if (!isRadiant) {
-                    this.deathInfo.radiantTower3Mid = 1;
+                if (isRadiant) {
+                    deathInfo.radiantTower3Mid = false;
                 } else {
-                    this.deathInfo.direTower3Mid = 1;
+                    deathInfo.direTower3Mid = false;
                 }
             }
         }
 
         if (targetName.contains("bot")) {
             if (targetName.contains("tower1")) {
-                if (!isRadiant) {
-                    this.deathInfo.radiantTower1Bot = 1;
+                if (isRadiant) {
+                    deathInfo.radiantTower1Bot = false;
                 } else {
-                    this.deathInfo.direTower1Bot = 1;
+                    deathInfo.direTower1Bot = false;
                 }
             }
             if (targetName.contains("tower2")) {
-                if (!isRadiant) {
-                    this.deathInfo.radiantTower2Bot = 1;
+                if (isRadiant) {
+                    deathInfo.radiantTower2Bot = false;
                 } else {
-                    this.deathInfo.direTower2Bot = 1;
+                    deathInfo.direTower2Bot = false;
                 }
             }
             if (targetName.contains("tower3")) {
-                if (!isRadiant) {
-                    this.deathInfo.radiantTower3Bot = 1;
+                if (isRadiant) {
+                    deathInfo.radiantTower3Bot = false;
                 } else {
-                    this.deathInfo.direTower3Bot = 1;
+                    deathInfo.direTower3Bot = false;
                 }
             }
         }
@@ -198,14 +184,14 @@ public class Parse {
 
     private void updateRoshanDeathInfo(Entry combatLogEntry) {
         String heroName = combatLogEntry.sourcename.replaceAll("_", "");
-        Integer slot = this.slotByName.get(heroName);
+        Integer slot = slotByName.get(heroName);
 
         boolean isRadiant = slot >= 0 && slot <= 4;
 
         if (isRadiant) {
-            this.deathInfo.radiantRoshan++;
+            deathInfo.radiantRoshan++;
         } else {
-            this.deathInfo.direRoshan++;
+            deathInfo.direRoshan++;
         }
     }
 
@@ -263,160 +249,172 @@ public class Parse {
                 Entry entry = new Entry();
                 entry.time = time;
 
-                time = 1;
-                String precision = "%.0f";
-
                 for (int i = 0; i < numPlayers; i++) {
-                    Integer hero = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_nSelectedHeroID", validIndices[i]);
-                    int handle = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_hSelectedHero", validIndices[i]);
-                    int playerTeam = getEntityProperty(pr, "m_vecPlayerData.%i.m_iPlayerTeam", validIndices[i]);
-                    int teamSlot = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iTeamSlot", validIndices[i]);
+                    int idx = validIndices[i];
+                    Integer hero = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_nSelectedHeroID", idx);
+                    int handle = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_hSelectedHero", idx);
+                    int playerTeam = getEntityProperty(pr, "m_vecPlayerData.%i.m_iPlayerTeam", idx);
+                    int teamSlot = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iTeamSlot", idx);
 
                     //2 is radiant, 3 is dire, 1 is other?
                     Entity dataTeam = playerTeam == 2 ? rData : dData;
 
                     if (playerTeam == 2 || playerTeam == 3 && teamSlot >= 0) {
-                        Integer level = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iLevel", validIndices[i]);
-                        Integer kills = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iKills", validIndices[i]);
-                        Integer deaths = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iDeaths", validIndices[i]);
-                        Integer assists = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iAssists", validIndices[i]);
+                        Integer level = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iLevel", idx);
+                        Integer kills = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iKills", idx);
+                        Integer deaths = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iDeaths", idx);
+                        Integer assists = getEntityProperty(pr, "m_vecPlayerTeamData.%i.m_iAssists", idx);
                         Integer denies = getEntityProperty(dataTeam, "m_vecDataTeam.%i.m_iDenyCount", teamSlot);
                         Integer gold = getEntityProperty(dataTeam, "m_vecDataTeam.%i.m_iTotalEarnedGold", teamSlot);
                         Integer lh = getEntityProperty(dataTeam, "m_vecDataTeam.%i.m_iLastHitCount", teamSlot);
                         Integer xp = getEntityProperty(dataTeam, "m_vecDataTeam.%i.m_iTotalEarnedXP", teamSlot);
 
-                        if (i == 0) {
-                            entry.level0 = String.format(precision, level / (double) time);
-                            entry.kills0 = String.format(precision, kills / (double) time);
-                            entry.deaths0 = String.format(precision, deaths / (double) time);
-                            entry.assists0 = String.format(precision, assists / (double) time);
-                            entry.denies0 = String.format(precision, denies / (double) time);
-                            entry.gold0 = String.format(precision, gold / (double) time);
-                            entry.lastHits0 = String.format(precision, lh / (double) time);
-                            entry.xp0 = String.format(precision, xp / (double) time);
-                        } else if (i == 1) {
-                            entry.level1 = String.format(precision, level / (double) time);
-                            entry.kills1 = String.format(precision, kills / (double) time);
-                            entry.deaths1 = String.format(precision, deaths / (double) time);
-                            entry.assists1 = String.format(precision, assists / (double) time);
-                            entry.denies1 = String.format(precision, denies / (double) time);
-                            entry.gold1 = String.format(precision, gold / (double) time);
-                            entry.lastHits1 = String.format(precision, lh / (double) time);
-                            entry.xp1 = String.format(precision, xp / (double) time);
-                        } else if (i == 2) {
-                            entry.level2 = String.format(precision, level / (double) time);
-                            entry.kills2 = String.format(precision, kills / (double) time);
-                            entry.deaths2 = String.format(precision, deaths / (double) time);
-                            entry.assists2 = String.format(precision, assists / (double) time);
-                            entry.denies2 = String.format(precision, denies / (double) time);
-                            entry.gold2 = String.format(precision, gold / (double) time);
-                            entry.lastHits2 = String.format(precision, lh / (double) time);
-                            entry.xp2 = String.format(precision, xp / (double) time);
-                        } else if (i == 3) {
-                            entry.level3 = String.format(precision, level / (double) time);
-                            entry.kills3 = String.format(precision, kills / (double) time);
-                            entry.deaths3 = String.format(precision, deaths / (double) time);
-                            entry.assists3 = String.format(precision, assists / (double) time);
-                            entry.denies3 = String.format(precision, denies / (double) time);
-                            entry.gold3 = String.format(precision, gold / (double) time);
-                            entry.lastHits3 = String.format(precision, lh / (double) time);
-                            entry.xp3 = String.format(precision, xp / (double) time);
-                        } else if (i == 4) {
-                            entry.level4 = String.format(precision, level / (double) time);
-                            entry.kills4 = String.format(precision, kills / (double) time);
-                            entry.deaths4 = String.format(precision, deaths / (double) time);
-                            entry.assists4 = String.format(precision, assists / (double) time);
-                            entry.denies4 = String.format(precision, denies / (double) time);
-                            entry.gold4 = String.format(precision, gold / (double) time);
-                            entry.lastHits4 = String.format(precision, lh / (double) time);
-                            entry.xp4 = String.format(precision, xp / (double) time);
-                        } else if (i == 5) {
-                            entry.level5 = String.format(precision, level / (double) time);
-                            entry.kills5 = String.format(precision, kills / (double) time);
-                            entry.deaths5 = String.format(precision, deaths / (double) time);
-                            entry.assists5 = String.format(precision, assists / (double) time);
-                            entry.denies5 = String.format(precision, denies / (double) time);
-                            entry.gold5 = String.format(precision, gold / (double) time);
-                            entry.lastHits5 = String.format(precision, lh / (double) time);
-                            entry.xp5 = String.format(precision, xp / (double) time);
-                        } else if (i == 6) {
-                            entry.level6 = String.format(precision, level / (double) time);
-                            entry.kills6 = String.format(precision, kills / (double) time);
-                            entry.deaths6 = String.format(precision, deaths / (double) time);
-                            entry.assists6 = String.format(precision, assists / (double) time);
-                            entry.denies6 = String.format(precision, denies / (double) time);
-                            entry.gold6 = String.format(precision, gold / (double) time);
-                            entry.lastHits6 = String.format(precision, lh / (double) time);
-                            entry.xp6 = String.format(precision, xp / (double) time);
-                        } else if (i == 7) {
-                            entry.level7 = String.format(precision, level / (double) time);
-                            entry.kills7 = String.format(precision, kills / (double) time);
-                            entry.deaths7 = String.format(precision, deaths / (double) time);
-                            entry.assists7 = String.format(precision, assists / (double) time);
-                            entry.denies7 = String.format(precision, denies / (double) time);
-                            entry.gold7 = String.format(precision, gold / (double) time);
-                            entry.lastHits7 = String.format(precision, lh / (double) time);
-                            entry.xp7 = String.format(precision, xp / (double) time);
-                        } else if (i == 8) {
-                            entry.level8 = String.format(precision, level / (double) time);
-                            entry.kills8 = String.format(precision, kills / (double) time);
-                            entry.deaths8 = String.format(precision, deaths / (double) time);
-                            entry.assists8 = String.format(precision, assists / (double) time);
-                            entry.denies8 = String.format(precision, denies / (double) time);
-                            entry.gold8 = String.format(precision, gold / (double) time);
-                            entry.lastHits8 = String.format(precision, lh / (double) time);
-                            entry.xp8 = String.format(precision, xp / (double) time);
-                        } else if (i == 9) {
-                            entry.level9 = String.format(precision, level / (double) time);
-                            entry.kills9 = String.format(precision, kills / (double) time);
-                            entry.deaths9 = String.format(precision, deaths / (double) time);
-                            entry.assists9 = String.format(precision, assists / (double) time);
-                            entry.denies9 = String.format(precision, denies / (double) time);
-                            entry.gold9 = String.format(precision, gold / (double) time);
-                            entry.lastHits9 = String.format(precision, lh / (double) time);
-                            entry.xp9 = String.format(precision, xp / (double) time);
+                        if (idx == 0) {
+                            entry.level0 = level;
+                            entry.kills0 = kills;
+                            entry.deaths0 = deaths;
+                            entry.assists0 = assists;
+                            entry.denies0 = denies;
+                            entry.gold0 = gold;
+                            entry.lastHits0 = lh;
+                            entry.xp0 = xp;
+                        } else if (idx == 1) {
+                            entry.level1 = level;
+                            entry.kills1 = kills;
+                            entry.deaths1 = deaths;
+                            entry.assists1 = assists;
+                            entry.denies1 = denies;
+                            entry.gold1 = gold;
+                            entry.lastHits1 = lh;
+                            entry.xp1 = xp;
+                        } else if (idx == 2) {
+                            entry.level2 = level;
+                            entry.kills2 = kills;
+                            entry.deaths2 = deaths;
+                            entry.assists2 = assists;
+                            entry.denies2 = denies;
+                            entry.gold2 = gold;
+                            entry.lastHits2 = lh;
+                            entry.xp2 = xp;
+                        } else if (idx == 3) {
+                            entry.level3 = level;
+                            entry.kills3 = kills;
+                            entry.deaths3 = deaths;
+                            entry.assists3 = assists;
+                            entry.denies3 = denies;
+                            entry.gold3 = gold;
+                            entry.lastHits3 = lh;
+                            entry.xp3 = xp;
+                        } else if (idx == 4) {
+                            entry.level4 = level;
+                            entry.kills4 = kills;
+                            entry.deaths4 = deaths;
+                            entry.assists4 = assists;
+                            entry.denies4 = denies;
+                            entry.gold4 = gold;
+                            entry.lastHits4 = lh;
+                            entry.xp4 = xp;
+                        } else if (idx == 5) {
+                            entry.level5 = level;
+                            entry.kills5 = kills;
+                            entry.deaths5 = deaths;
+                            entry.assists5 = assists;
+                            entry.denies5 = denies;
+                            entry.gold5 = gold;
+                            entry.lastHits5 = lh;
+                            entry.xp5 = xp;
+                        } else if (idx == 6) {
+                            entry.level6 = level;
+                            entry.kills6 = kills;
+                            entry.deaths6 = deaths;
+                            entry.assists6 = assists;
+                            entry.denies6 = denies;
+                            entry.gold6 = gold;
+                            entry.lastHits6 = lh;
+                            entry.xp6 = xp;
+                        } else if (idx == 7) {
+                            entry.level7 = level;
+                            entry.kills7 = kills;
+                            entry.deaths7 = deaths;
+                            entry.assists7 = assists;
+                            entry.denies7 = denies;
+                            entry.gold7 = gold;
+                            entry.lastHits7 = lh;
+                            entry.xp7 = xp;
+                        } else if (idx == 8) {
+                            entry.level8 = level;
+                            entry.kills8 = kills;
+                            entry.deaths8 = deaths;
+                            entry.assists8 = assists;
+                            entry.denies8 = denies;
+                            entry.gold8 = gold;
+                            entry.lastHits8 = lh;
+                            entry.xp8 = xp;
+                        } else if (idx == 9) {
+                            entry.level9 = level;
+                            entry.kills9 = kills;
+                            entry.deaths9 = deaths;
+                            entry.assists9 = assists;
+                            entry.denies9 = denies;
+                            entry.gold9 = gold;
+                            entry.lastHits9 = lh;
+                            entry.xp9 = xp;
                         }
 
                         //get the player's hero entity
                         Entity e = ctx.getProcessor(Entities.class).getByHandle(handle);
-                        if (this.slotByName.size() != numPlayers) {
-                            if (e != null) {
-                                String unit = e.getDtClass().getDtName();
-                                String ending = unit.substring("CDOTA_Unit_Hero_".length());
-                                String combatLogName = "npc_dota_hero_" + ending.toLowerCase();
-                                combatLogName = combatLogName.replaceAll("_", "");
-                                this.slotByName.putIfAbsent(combatLogName, i);
+//                        if (this.slotByName.size() != numPlayers) {
+                        if (e != null) {
+                            String unit = e.getDtClass().getDtName();
+                            String ending = unit.substring("CDOTA_Unit_Hero_".length());
+                            String combatLogName = "npc_dota_hero_" + ending.toLowerCase();
+                            combatLogName = combatLogName.replaceAll("_", "");
+
+                            if (slotByName.get(combatLogName) != null) {
+                                if (!slotByName.get(combatLogName).equals(idx)) {
+                                    throw new Exception(String.format("Mismatch index and name %s, %d", combatLogName, idx));
+                                }
                             }
+
+                            if (heroesOrder.get(idx) != null) {
+                                if (!heroesOrder.get(idx).equals(hero)) {
+                                    throw new Exception(String.format("Mismatch index and heroId %d, %d", idx, hero));
+                                }
+                            }
+
+                            heroesOrder.putIfAbsent(idx, hero);
+                            slotByName.putIfAbsent(combatLogName, idx);
                         }
+//                        }
                     } else {
                         String errorMessage = String.format("Incorrect player team or team slot: playerTeam = %d, teamSlot = %d", playerTeam, teamSlot);
                         throw new Exception(errorMessage);
                     }
                 }
 
-                entry.rt1t = String.format(precision, this.deathInfo.radiantTower1Top / (double) time);
-                entry.rt2t = String.format(precision, this.deathInfo.radiantTower2Top / (double) time);
-                entry.rt3t = String.format(precision, this.deathInfo.radiantTower3Top / (double) time);
-                entry.rt1m = String.format(precision, this.deathInfo.radiantTower1Mid / (double) time);
-                entry.rt2m = String.format(precision, this.deathInfo.radiantTower2Mid / (double) time);
-                entry.rt3m = String.format(precision, this.deathInfo.radiantTower3Mid / (double) time);
-                entry.rt1b = String.format(precision, this.deathInfo.radiantTower1Bot / (double) time);
-                entry.rt2b = String.format(precision, this.deathInfo.radiantTower2Bot / (double) time);
-                entry.rt3b = String.format(precision, this.deathInfo.radiantTower3Bot / (double) time);
+                entry.rt1t = deathInfo.radiantTower1Top;
+                entry.rt2t = deathInfo.radiantTower2Top;
+                entry.rt3t = deathInfo.radiantTower3Top;
+                entry.rt1m = deathInfo.radiantTower1Mid;
+                entry.rt2m = deathInfo.radiantTower2Mid;
+                entry.rt3m = deathInfo.radiantTower3Mid;
+                entry.rt1b = deathInfo.radiantTower1Bot;
+                entry.rt2b = deathInfo.radiantTower2Bot;
+                entry.rt3b = deathInfo.radiantTower3Bot;
 
-                entry.rRosh = String.format(precision, this.deathInfo.radiantRoshan / (double) time);
+                entry.rRosh = deathInfo.radiantRoshan;
 
-                entry.dt1t = String.format(precision, this.deathInfo.direTower1Top / (double) time);
-                entry.dt2t = String.format(precision, this.deathInfo.direTower2Top / (double) time);
-                entry.dt3t = String.format(precision, this.deathInfo.direTower3Top / (double) time);
-                entry.dt1m = String.format(precision, this.deathInfo.direTower1Mid / (double) time);
-                entry.dt2m = String.format(precision, this.deathInfo.direTower2Mid / (double) time);
-                entry.dt3m = String.format(precision, this.deathInfo.direTower3Mid / (double) time);
-                entry.dt1b = String.format(precision, this.deathInfo.direTower1Bot / (double) time);
-                entry.dt2b = String.format(precision, this.deathInfo.direTower2Bot / (double) time);
-                entry.dt3b = String.format(precision, this.deathInfo.direTower3Bot / (double) time);
+                entry.dt1t = deathInfo.direTower1Top;
+                entry.dt2t = deathInfo.direTower2Top;
+                entry.dt3t = deathInfo.direTower3Top;
+                entry.dt1m = deathInfo.direTower1Mid;
+                entry.dt2m = deathInfo.direTower2Mid;
+                entry.dt3m = deathInfo.direTower3Mid;
+                entry.dt1b = deathInfo.direTower1Bot;
+                entry.dt2b = deathInfo.direTower2Bot;
+                entry.dt3b = deathInfo.direTower3Bot;
 
-                entry.dRosh = String.format(precision, this.deathInfo.direRoshan / (double) time);
+                entry.dRosh = deathInfo.direRoshan;
 
                 output(entry);
 

@@ -1,9 +1,12 @@
 from sqlalchemy import BigInteger, Boolean, Integer, VARCHAR, TIMESTAMP, SMALLINT
 from sqlalchemy import ForeignKey, create_engine, Table, MetaData, Column
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import JSONB
 from d2preparer.envvar import db_host, db_name, db_pass, db_port, db_user
 
 engine = create_engine(f'postgresql+psycopg2://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}')
+
+Session = sessionmaker(bind=engine)
 
 conn = engine.connect()
 
@@ -45,7 +48,17 @@ pro_match = Table(
     Column('start_time', Integer),
     Column('replay_url', VARCHAR(255)),
     Column('downloaded_replay', Boolean),
-    Column('parse_fail', Boolean)
+    Column('parse_success', Boolean),
+    Column('hero0', Integer),
+    Column('hero1', Integer),
+    Column('hero2', Integer),
+    Column('hero3', Integer),
+    Column('hero4', Integer),
+    Column('hero5', Integer),
+    Column('hero6', Integer),
+    Column('hero7', Integer),
+    Column('hero8', Integer),
+    Column('hero9', Integer)
 )
 
 pro_match_details = Table(
