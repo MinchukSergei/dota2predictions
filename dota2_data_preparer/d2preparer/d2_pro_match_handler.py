@@ -12,7 +12,8 @@ MODULE_NAME = __file__
 
 
 def main():
-    root_replays_dir = Path('E:/Programming/bsuir/diss/temp')
+    # root_replays_dir = Path('E:/Programming/bsuir/diss/temp')
+    root_replays_dir = Path('E:/Programming/bsuir/diss/replays')
 
     match_sheets = 1000
 
@@ -45,7 +46,7 @@ def main():
                     save_match_in_db(res_json, last_match_pk, True)
         except Exception as e:
             save_match_in_db(None, last_match_pk, False)
-            pro_match_error_handler(last_match_pk, replay_name, str(e))
+            pro_match_error_handler(last_match_pk, str(replay_name), str(e))
     # time.sleep(0.3)
 
 
