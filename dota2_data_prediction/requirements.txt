@@ -3,3 +3,5 @@ psycopg2
 requests
 backoff
 tqdm
+keras
+tensorflow-gpu

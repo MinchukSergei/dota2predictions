@@ -4,7 +4,7 @@ import backoff
 import requests
 from sqlalchemy import select, and_
 
-from d2preparer.db_connector import conn, pro_match
+from db_connector.db_connector import conn, pro_match
 from d2preparer.error_log import db_log
 
 MODULE_NAME = __file__

@@ -1,5 +1,5 @@
 import json
-from d2preparer.db_connector import conn, error_log
+from db_connector.db_connector import conn, error_log
 
 
 def db_log(module_name, error_message):

@@ -1,16 +1,15 @@
 import backoff
 import requests
-import time
 from sqlalchemy import select
 
-from d2preparer.db_connector import conn, public_match
+from db_connector.db_connector import conn, public_match
 from d2preparer.error_log import db_log
 
 MODULE_NAME = __file__
 
 
 def main():
-    match_sheets = 10000  # 100 per one sheet
+    match_sheets = 1000  # 100 per one sheet
 
     for i in range(match_sheets):
         print(f'Number of sheet: {i}')
