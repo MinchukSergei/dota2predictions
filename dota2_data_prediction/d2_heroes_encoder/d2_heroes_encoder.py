@@ -24,12 +24,13 @@ def encode_heroes():
     models = list(models_path.glob('*.hdf5'))
     models.sort(reverse=True)
     best_model = models[0] if len(models) > 0 else None
+    use_best_model = True
 
-    if best_model:
+    if best_model and use_best_model:
         model = load_model(str(best_model.absolute()))
     else:
         model = Sequential([
-            Dense(128, input_shape=(4, len(one_hot_enc)), kernel_initializer='glorot_uniform',
+            Dense(64, input_shape=(4, len(one_hot_enc)), kernel_initializer='glorot_uniform',
                   kernel_regularizer=l1(0)),
             Flatten(),
             Dense(len(one_hot_enc), activation='softmax')
@@ -48,11 +49,11 @@ def encode_heroes():
         for i in range(0, public_match_count, limit):
             (x_train, y_train), (x_valid, y_valid) = generate_pick_samples(0.97, 0.03, 0, limit, offset)[0:2]
 
-            early_stopping = EarlyStopping(monitor='val_loss', patience=7, verbose=0, mode='min')
+            early_stopping = EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='min')
             mcp_save = ModelCheckpoint('./models/weights.{acc:.5f}.hdf5', save_best_only=True, monitor='val_acc',
                                        mode='max')
 
-            model.fit(x_train, y_train, 512, 10, validation_data=(x_valid, y_valid),
+            model.fit(x_train, y_train, 512, 3, validation_data=(x_valid, y_valid),
                       callbacks=[early_stopping, mcp_save])
 
             offset += limit
