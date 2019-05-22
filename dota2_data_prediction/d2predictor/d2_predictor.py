@@ -1,7 +1,7 @@
 from keras import Sequential, Input, Model
 from keras.layers import Dense, Dropout, concatenate
 from keras.optimizers import Adam
-from keras.regularizers import l2, l1
+from keras.regularizers import l2, l1, l1_l2
 from sklearn.preprocessing import StandardScaler
 from sqlalchemy import select, and_
 import random
@@ -18,31 +18,31 @@ def main():
 
 
 def build_model():
-    l2_reg_m = 0.015
-    l2_reg_h = 0.4
+    l2_reg_m = 0.001
+    l1_reg_h = 0.01
 
-    input_meta = Input(shape=(34,))
+    input_meta = Input(shape=(14,))
     input_heroes = Input(shape=(128,))
 
-    x = Dense(512, kernel_regularizer=l1(0.01), activation='relu', kernel_initializer='lecun_normal')(input_meta)
+    x = Dense(512, kernel_regularizer=l2(l2_reg_m), activation='selu', kernel_initializer='lecun_normal')(input_meta)
     x = Dropout(0.3)(x)
-    x = Dense(512, kernel_regularizer=l2(l2_reg_m), activation='relu', kernel_initializer='lecun_normal')(x)
-    x = Dropout(0.3)(x)
-    x = Dense(512, kernel_regularizer=l2(l2_reg_m), activation='relu', kernel_initializer='lecun_normal')(x)
+    x = Dense(512, kernel_regularizer=l2(l2_reg_m), activation='selu', kernel_initializer='lecun_normal')(x)
+    x = Dropout(0.2)(x)
+    x = Dense(512, kernel_regularizer=l2(l2_reg_m), activation='selu', kernel_initializer='lecun_normal')(x)
     x = Model(inputs=input_meta, outputs=x)
 
-    y = Dense(1024, kernel_regularizer=l1(0.01), activation='relu', kernel_initializer='lecun_normal')(
+    y = Dense(64, kernel_regularizer=l1(l1_reg_h), activation='selu', kernel_initializer='lecun_normal')(
         input_heroes)
-    y = Dropout(0.6)(y)
-    y = Dense(1024, kernel_regularizer=l2(l2_reg_h), activation='relu', kernel_initializer='lecun_normal')(y)
-    y = Dropout(0.6)(y)
-    y = Dense(1024, kernel_regularizer=l2(l2_reg_h), activation='relu', kernel_initializer='lecun_normal')(y)
+    y = Dropout(0.5)(y)
+    y = Dense(64, kernel_regularizer=l1(l1_reg_h), activation='selu', kernel_initializer='lecun_normal')(y)
+    y = Dropout(0.5)(y)
+    y = Dense(64, kernel_regularizer=l1(l1_reg_h), activation='selu', kernel_initializer='lecun_normal')(y)
     y = Model(inputs=input_heroes, outputs=y)
 
     combined = concatenate([x.output, y.output])
 
-    z = Dense(2, kernel_regularizer=l1(0.01), activation='selu')(combined)
-    z = Dropout(0.2)(z)
+    z = Dense(2, kernel_regularizer=l1_l2(l1_reg_h, l2_reg_m), activation='selu')(combined)
+    z = Dropout(0.1)(z)
     z = Dense(2, activation='softmax')(z)
 
     model = Model(inputs=[x.input, y.input], outputs=z)
@@ -70,13 +70,26 @@ def build_model():
 
 
 def fit_model(model):
-    pro_matches = get_pro_matches()[1000:2000]
+    pro_matches = get_pro_matches()
     random.shuffle(pro_matches)
 
-    train_data, valid_data, test_data = split_data(pro_matches, 0.9, 0.05, 0.05)
+    train_data, valid_data, test_data = split_data(pro_matches, 0.9, 0.03, 0.07)
 
     heroes_embeddings = np.load('../d2_heroes_encoder/heroes_data/heroes_embeddings.npy')
     embeddings_ids = get_embeddings_ids()
+
+    # x_meta_arr = []
+    # x_heroes_arr = []
+    # y_labels_arr = []
+    #
+    # for i in range(0, len(pro_matches) // 100):
+    #     x_meta, x_heroes, y_labels = prepare_data(pro_matches[i * 100: (i + 1) * 100], heroes_embeddings, embeddings_ids)
+    #     x_meta_arr.extend(x_meta)
+    #     x_heroes_arr.extend(x_heroes)
+    #     y_labels_arr.extend(y_labels)
+    #
+    # np.savez('./prepared_data', x_meta=np.array(x_meta_arr), x_heroes=np.array(x_heroes_arr), y_labels=np.array(y_labels_arr))
+    # return
 
     use_saved_scaler = True
 
@@ -194,7 +207,7 @@ def prepare_data(data, embeddings, embeddings_ids):
         # DENIES D 77-81
         x_meta_row.append(sum(d[77:82]))
 
-        x_meta_row.extend(d[82:time_part_idx])
+        # x_meta_row.extend(d[82:time_part_idx])
 
         match_pk = d[match_pk_idx]
         match = data_dict[match_pk]
@@ -220,7 +233,7 @@ def prepare_data(data, embeddings, embeddings_ids):
         x_heroes.append(x_heroes_row)
         y.append(y_row)
 
-    return np.array(x_meta), np.array(x_heroes), np.array(y)
+    return np.array(x_meta), np.array(x_heroes, dtype='float16'), np.array(y)
 
 
 def get_pro_matches():
