@@ -22,9 +22,9 @@ def main():
     # build_class_hist()
     # build_duration_hist()
     # build_gpm_xpm_plot()
-    # model = build_model()
-    # fit_model(model)
-    fit_model_log_reg()
+    model = build_model()
+    fit_model(model)
+    # fit_model_log_reg()
 
 
 def build_gpm_xpm_plot():
@@ -107,19 +107,6 @@ def build_model():
 
     model = Model(inputs=[x.input, y.input], outputs=z)
 
-    # model = Sequential([
-    #     Dense(512, input_dim=162, kernel_regularizer=l2(l2_reg), activation='selu', kernel_initializer='lecun_normal'),
-    #     Dropout(0.5),
-    #     Dense(512, kernel_regularizer=l2(l2_reg), activation='selu', kernel_initializer='lecun_normal'),
-    #     Dropout(0.5),
-    #     Dense(512, kernel_regularizer=l2(l2_reg), activation='selu', kernel_initializer='lecun_normal'),
-    #     Dropout(0.5),
-    #     Dense(512, kernel_regularizer=l2(l2_reg), activation='selu', kernel_initializer='lecun_normal'),
-    #     Dropout(0.5),
-    #     Dense(512, kernel_regularizer=l2(l2_reg), activation='selu', kernel_initializer='lecun_normal'),
-    #     Dense(2, activation='softmax')
-    # ])
-
     model.compile(
         optimizer=Adam(lr=0.001, beta_1=0.9, beta_2=0.999),
         loss='categorical_crossentropy',
@@ -167,8 +154,6 @@ def fit_model(model):
         scaler_meta.partial_fit(x_meta_train)
         scaler_heroes.partial_fit(x_heroes_train)
     else:
-        # x_meta_train = scaler_meta.transform(x_meta_train)
-        # x_heroes_train = scaler_heroes.transform(x_heroes_train)
         x_meta_train = scaler_meta.fit_transform(x_meta_train)
         x_heroes_train = scaler_heroes.fit_transform(x_heroes_train)
         x_meta_valid = scaler_meta.transform(x_meta_valid)
@@ -204,12 +189,11 @@ def fit_model_log_reg():
 
     x_meta_len = len(x_meta)
     part = int(x_meta_len * 0.25)
-    rnd_idx = np.random.randint(0, x_meta_len - part - 1)
-    rnd_idx = 4069960
+    start_index = 4069960
 
-    x_meta = x_meta[rnd_idx:rnd_idx + part]
-    x_heroes = x_heroes[rnd_idx:rnd_idx + part]
-    y_labels = y_labels[rnd_idx:rnd_idx + part]
+    x_meta = x_meta[start_index:start_index + part]
+    x_heroes = x_heroes[start_index:start_index + part]
+    y_labels = y_labels[start_index:start_index + part]
 
     x_meta = np.delete(x_meta, [2, 3], 1)  # remove xp
 
