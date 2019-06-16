@@ -14,7 +14,7 @@ from sklearn.metrics import accuracy_score
 from sqlalchemy import select, and_, text
 from tqdm import tqdm
 
-from db_connector.db_connector import pro_match, pro_match_details, conn, engine
+# from db_connector.db_connector import pro_match, pro_match_details, conn, engine
 
 
 def main():
